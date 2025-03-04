@@ -92,10 +92,10 @@ def markX(mat,d, i_start, i_end, X_drop, max_score):
         j=d-i
         s = mat[i][j]
         explored[i][j] = 1
-        # if s < max_score - X_drop:
-        #     mat[i][j] = float('-inf')
-        if (i == 4 and j == 1) or (i == 1 and j == 4):
+        if s < max_score - X_drop:
             mat[i][j] = float('-inf')
+        # if (i == 4 and j == 1) or (i == 1 and j == 4):
+        #     mat[i][j] = float('-inf')
         # if (i == 0 and j == 2) or (i == 2 and j == 0):
         #     mat[i][j] = 99
 
@@ -114,7 +114,7 @@ def modify_i_end(i_end, d_hi, ad):
     return i_end
 
 # NO BASE CASE INCLUDED
-def nw4(A,B, x_thresh=1):
+def nw4(A,B, x_thresh=2):
     mat = initialize(A,B, 0.1)
     m = len(A) + 1 # rows
     n = len(B) + 1 # cols
@@ -131,7 +131,7 @@ def nw4(A,B, x_thresh=1):
         for i in range(i_start, i_end):
             j=ad-i
             s = score(mat, A, B, i, j)
-            mat[i][j] = 10
+            mat[i][j] = s
             explored[i][j] = 1
             max_score = max(mat[i][j], max_score)
         markX(mat, ad, i_start, i_end, x_thresh, max_score)
@@ -142,7 +142,6 @@ def nw4(A,B, x_thresh=1):
         i_start = modify_i_start(i_start, lower_diag, ad)
         i_end = modify_i_end(i_end, upper_diag, ad)
         print(i_start, i_end)
-        viz(mat, A, B)
     print("----")
     print(ad)
     print("----")
@@ -154,10 +153,10 @@ def nw4(A,B, x_thresh=1):
         for i in range(i_start, i_end):
             j=ad-i
             s = score(mat, A, B, i, j)
-            mat[i][j] = 10
+            mat[i][j] = s
             explored[i][j] = 1
             max_score = max(mat[i][j], max_score)
-        if ad == m + n - 2: # last antidiagonal
+        if i_start >= i_end: # last antidiagonal
             break
         markX(mat, ad, i_start, i_end, x_thresh, max_score)
         i_start, d_lo = get_i_start(mat, ad, i_start, i_end)
@@ -166,7 +165,7 @@ def nw4(A,B, x_thresh=1):
         upper_diag = min(upper_diag, d_hi)
         i_start = modify_i_start(i_start, lower_diag, ad)
         i_end = modify_i_end(i_end, upper_diag, ad)
-        viz(mat, A, B)
+    viz(mat, A, B)
 
 
 
