@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-A = "ACGGGGAAAAAAA"
-B = "ATTCGGAAAAAAA"
+A = "ACGGGG"
+B = "ATTCGG"
 ping = 1
 
 
@@ -12,10 +12,10 @@ def initialize(A, B, fill_val):
     matp = mat[1:,1:]
     matp.fill(fill_val)
     #base case
-    for i in range(1, len(A)+ping):
-        mat[i][0] = i
-    for j in range(1, len(B)+ping):
-        mat[0][j] = j  
+    # for i in range(1, len(A)+ping):
+    #     mat[i][0] = i
+    # for j in range(1, len(B)+ping):
+    #     mat[0][j] = j  
     return mat
 
 explored = initialize(A,B, 2)
@@ -87,7 +87,7 @@ def markX(mat,d, i_start, i_end, X_drop, x_drop_started):
         explored[i][j] = 1
         # if s>X_drop:
         #     mat[i][j] = 99
-        if (i == 5 and j == 1) or (i == 1 and j == 5):
+        if (i == 4 and j == 1) or (i == 1 and j == 4):
             mat[i][j] = 99
         # if (i == 2 and j == 5) or (i == 5 and j == 2):
         #     mat[i][j] = 99
@@ -106,16 +106,18 @@ def modify_i_end(i_end, d_hi, ad):
     i_end = min(i_end, i_on_diag)
     return i_end
 
-
+# NO BASE CASE INCLUDED
 def nw4(A,B, x_thresh=3):
     mat = initialize(A,B, 0.1)
-    m = len(A) + 1
-    n = len(B) + 1
+    m = len(A) + 1 # rows
+    n = len(B) + 1 # cols
     i_start = 1
     i_end = 1
+    # TODO: figure out how to incorporate the base case into the compute and maybe start from 0?
     lower_diag = float('-inf')
     upper_diag = float('inf')
-    for ad in range(2, n + 1):
+    # this has to be the long side
+    for ad in range(2, m + 1):
         i_end = i_end + 1 # up to but not including
         for i in range(i_start, i_end):
             j=ad-i
@@ -130,8 +132,33 @@ def nw4(A,B, x_thresh=3):
         i_start = modify_i_start(i_start, lower_diag, ad)
         i_end = modify_i_end(i_end, upper_diag, ad)
         print(i_start, i_end)
+    # viz(mat, A, B)
+    # return mat
+    print("----")
+    print(ad)
+    print("----")
+    for ad in range(m, m + n - 2):
+        #i_end = i_end + 1 # up to but not including
+        #i_start = i_start
+        expected_i_start = ad - m + 1
+        i_start = max(i_start, expected_i_start)
+        for i in range(i_start, i_end):
+            j=ad-i
+            # s = score(mat, A, B, i, j)
+            mat[i][j] = 10
+            explored[i][j] = 1
+        markX(mat, ad, i_start, i_end, x_thresh, False)
+        i_start, d_lo = get_i_start(mat, ad, i_start, i_end)
+        i_end, d_hi = get_i_end(mat, ad, i_start, i_end)
+        lower_diag = max(lower_diag, d_lo)
+        upper_diag = min(upper_diag, d_hi)
+        i_start = modify_i_start(i_start, lower_diag, ad)
+        i_end = modify_i_end(i_end, upper_diag, ad)
     viz(mat, A, B)
     viz(explored, A, B)
+
+
+
     return mat
 
 
