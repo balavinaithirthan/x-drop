@@ -12,10 +12,10 @@ def initialize(A, B, fill_val):
     matp = mat[1:,1:]
     matp.fill(fill_val)
     #base case
-    # for i in range(1, len(A)+ping):
-    #     mat[i][0] = i
-    # for j in range(1, len(B)+ping):
-    #     mat[0][j] = j  
+    for i in range(1, len(A)+ping):
+        mat[i][0] = -i
+    for j in range(1, len(B)+ping):
+        mat[0][j] = -j  
     return mat
 
 explored = initialize(A,B, 2)
@@ -52,20 +52,20 @@ def print_matrix(mat):
         print()
 
 def score(mat, A, B, i,j):
-    diag = mat[i-1][j-1] + int(A[i-1] != B[j-1])
-    left = mat[i][j-1] + 1
-    up = mat[i-1][j] + 1
-    return  min(diag, left, up)
+    diag = mat[i-1][j-1] + int(A[i-1] == B[j-1])
+    left = mat[i][j-1] - 2
+    up = mat[i-1][j] - 2
+    return  max(diag, left, up)
 
 
 def get_i_start(mat,d, i_start, i_end):
     i = i_start
     j = d - i
-    while i < i_end and mat[i][j] > 50 :
+    while i < i_end and mat[i][j] == float('-inf'):
         explored[i][j] = 1
         i += 1
         j = d - i
-    if mat[i_start][d-i_start] <= 50: # if no -inf yet then set to seen to 
+    if mat[i_start][d-i_start] != float('-inf'): # if no -inf yet then set to seen to 
         d_lo= float('-inf')
     else:
         d_lo = i - j
@@ -76,31 +76,27 @@ def get_i_start(mat,d, i_start, i_end):
 def get_i_end(mat,d, i_start, i_end):
     i = i_end-1 # right now up to and not including!
     j = d - i
-    while i > i_start and mat[i][j] > 50 :
+    while i > i_start and mat[i][j] == float('-inf'):
         explored[i][j] = 1
         i -= 1
         j = d - i
-    # need to account for shrunk too much
-    if mat[i_end - 1][d - (i_end - 1)] <= 50: # if no -inf yet then set to seen to 
+    if mat[i_end - 1][d - (i_end - 1)] != float('-inf'): # if no -inf yet then set to seen to 
         d_hi = float('inf')
     else:
         d_hi = i - j + 2
     return i + 1, d_hi
 
-def markX(mat,d, i_start, i_end, X_drop, x_drop_started):
+def markX(mat,d, i_start, i_end, X_drop, max_score):
     print("markX", d, i_start, i_end)
-    if x_drop_started:
-        mat[i_start][d-i_start] = 99
-        mat[i_end-1][d-(i_end-1)] = 99
     for i in range(i_start, i_end):
         j=d-i
         s = mat[i][j]
         explored[i][j] = 1
-        # if s>X_drop:
-        #     mat[i][j] = 99
-        if (i == 4 and j == 0) or (i == 0 and j == 4):
-            mat[i][j] = 99
-        # if (i == 2 and j == 5) or (i == 5 and j == 2):
+        # if s < max_score - X_drop:
+        #     mat[i][j] = float('-inf')
+        if (i == 4 and j == 1) or (i == 1 and j == 4):
+            mat[i][j] = float('-inf')
+        # if (i == 0 and j == 2) or (i == 2 and j == 0):
         #     mat[i][j] = 99
 
 def modify_i_start(i_start, d_lo, ad):
@@ -118,24 +114,27 @@ def modify_i_end(i_end, d_hi, ad):
     return i_end
 
 # NO BASE CASE INCLUDED
-def nw4(A,B, x_thresh=3):
+def nw4(A,B, x_thresh=1):
     mat = initialize(A,B, 0.1)
     m = len(A) + 1 # rows
     n = len(B) + 1 # cols
-    i_start = 0
-    i_end = 0
+    i_start = 1
+    i_end = 1
+    max_score = float('-inf')
     # TODO: figure out how to incorporate the base case into the compute and maybe start from 0?
     lower_diag = float('-inf')
     upper_diag = float('inf')
     # this has to be the long side
-    for ad in range(0, m): # m is len(A) + 1
+    for ad in range(2, m): # m is len(A) + 1
+        # change to 0 and i_start = 0, i_end = 0 if base case incorporated
         i_end = i_end + 1 # up to but not including
         for i in range(i_start, i_end):
             j=ad-i
-            # s = score(mat, A, B, i, j)
+            s = score(mat, A, B, i, j)
             mat[i][j] = 10
             explored[i][j] = 1
-        markX(mat, ad, i_start, i_end, x_thresh, False)
+            max_score = max(mat[i][j], max_score)
+        markX(mat, ad, i_start, i_end, x_thresh, max_score)
         i_start, d_lo = get_i_start(mat, ad, i_start, i_end)
         i_end, d_hi = get_i_end(mat, ad, i_start, i_end)
         lower_diag = max(lower_diag, d_lo)
@@ -143,7 +142,7 @@ def nw4(A,B, x_thresh=3):
         i_start = modify_i_start(i_start, lower_diag, ad)
         i_end = modify_i_end(i_end, upper_diag, ad)
         print(i_start, i_end)
-    # viz(mat, A, B)
+        viz(mat, A, B)
     print("----")
     print(ad)
     print("----")
@@ -154,18 +153,20 @@ def nw4(A,B, x_thresh=3):
         i_end = min(i_end + 1, expected_i_end)
         for i in range(i_start, i_end):
             j=ad-i
-            # s = score(mat, A, B, i, j)
+            s = score(mat, A, B, i, j)
             mat[i][j] = 10
             explored[i][j] = 1
-        markX(mat, ad, i_start, i_end, x_thresh, False)
+            max_score = max(mat[i][j], max_score)
+        if ad == m + n - 2: # last antidiagonal
+            break
+        markX(mat, ad, i_start, i_end, x_thresh, max_score)
         i_start, d_lo = get_i_start(mat, ad, i_start, i_end)
         i_end, d_hi = get_i_end(mat, ad, i_start, i_end)
         lower_diag = max(lower_diag, d_lo)
         upper_diag = min(upper_diag, d_hi)
         i_start = modify_i_start(i_start, lower_diag, ad)
         i_end = modify_i_end(i_end, upper_diag, ad)
-    viz(mat, A, B)
-    viz(explored, A, B)
+        viz(mat, A, B)
 
 
 
