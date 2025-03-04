@@ -1,0 +1,142 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+A = "ACGGGGAAAAAAA"
+B = "ATTCGGAAAAAAA"
+ping = 1
+
+
+def initialize(A, B, fill_val):
+    N = len(A)
+    mat = np.zeros((N+ping, N+ping))
+    matp = mat[1:,1:]
+    matp.fill(fill_val)
+    #base case
+    for i in range(1, len(A)+ping):
+        mat[i][0] = i
+    for j in range(1, len(B)+ping):
+        mat[0][j] = j  
+    return mat
+
+explored = initialize(A,B, 2)
+
+
+#visualize the matrix using matplotlib
+def viz(mat, A, B):
+    fig, ax = plt.subplots()
+    ax.matshow(mat, cmap='RdYlGn')
+    for i in range(mat.shape[0]):
+        for j in range(mat.shape[1]):
+            c = mat[i][j]
+            ax.text(j, i, str(c), va='center', ha='center')
+
+    ax.set_xticklabels([''] + list(B))
+    ax.set_yticklabels([''] + list(A))
+    plt.show()
+
+#print matrix function
+def print_matrix(mat):
+    for i in range(mat.shape[0]):
+        for j in range(mat.shape[1]):
+            print(mat[i][j], end = " ")
+        print()
+
+def score(mat, A, B, i,j):
+    diag = mat[i-1][j-1] + int(A[i-1] != B[j-1])
+    left = mat[i][j-1] + 1
+    up = mat[i-1][j] + 1
+    return  min(diag, left, up)
+
+
+def get_i_start(mat,d, i_start, i_end):
+    i = i_start
+    j = d - i
+    while i < i_end and mat[i][j] > 50 :
+        explored[i][j] = 1
+        i += 1
+        j = d - i
+    if mat[i_start][d-i_start] <= 50: # if no -inf yet then set to seen to 
+        d_lo= float('-inf')
+    else:
+        d_lo = i - j
+        # -2 is optional, here we are saying make the
+        # it looks a bit nicer because we are cutting off the ad wrong
+    return i, d_lo
+
+def get_i_end(mat,d, i_start, i_end):
+    i = i_end-1 # right now up to and not including!
+    j = d - i
+    while i > i_start and mat[i][j] >50 :
+        explored[i][j] = 1
+        i -= 1
+        j = d - i
+    if mat[i_end - 1][d - (i_end - 1)] <= 50: # if no -inf yet then set to seen to 
+        d_hi = float('inf')
+    else:
+        d_hi = i - j + 2
+    return i + 1, d_hi
+
+def markX(mat,d, i_start, i_end, X_drop, x_drop_started):
+    print("markX", d, i_start, i_end)
+    if x_drop_started:
+        mat[i_start][d-i_start] = 99
+        mat[i_end-1][d-(i_end-1)] = 99
+    for i in range(i_start, i_end):
+        j=d-i
+        s = mat[i][j]
+        explored[i][j] = 1
+        # if s>X_drop:
+        #     mat[i][j] = 99
+        if (i == 5 and j == 1) or (i == 1 and j == 5):
+            mat[i][j] = 99
+        # if (i == 2 and j == 5) or (i == 5 and j == 2):
+        #     mat[i][j] = 99
+
+def modify_i_start(i_start, d_lo, ad):
+    # if d_lo < 0:
+    #     return i_start
+    i_on_diag = (d_lo + ad) // 2
+    i_start = max(i_start, i_on_diag)
+    return i_start
+
+def modify_i_end(i_end, d_hi, ad):
+    # if d_hi < 0:
+    #     return i_end
+    i_on_diag = (d_hi + ad) // 2
+    i_end = min(i_end, i_on_diag)
+    return i_end
+
+
+def nw4(A,B, x_thresh=3):
+    mat = initialize(A,B, 0.1)
+    m = len(A) + 1
+    n = len(B) + 1
+    i_start = 1
+    i_end = 1
+    lower_diag = float('-inf')
+    upper_diag = float('inf')
+    for ad in range(2, n + 1):
+        i_end = i_end + 1 # up to but not including
+        for i in range(i_start, i_end):
+            j=ad-i
+            # s = score(mat, A, B, i, j)
+            mat[i][j] = 10
+            explored[i][j] = 1
+        markX(mat, ad, i_start, i_end, x_thresh, False)
+        i_start, d_lo = get_i_start(mat, ad, i_start, i_end)
+        i_end, d_hi = get_i_end(mat, ad, i_start, i_end)
+        lower_diag = max(lower_diag, d_lo)
+        upper_diag = min(upper_diag, d_hi)
+        i_start = modify_i_start(i_start, lower_diag, ad)
+        i_end = modify_i_end(i_end, upper_diag, ad)
+        print(i_start, i_end)
+    viz(mat, A, B)
+    viz(explored, A, B)
+    return mat
+
+
+#A = "ACGGGGAACGGGGAGG"
+#B = "ATTCGGAACGGGGAGG"
+#B = "ATTCGGAATTCGGA"
+mat = nw4(A, B,3)
+print_matrix(mat)
