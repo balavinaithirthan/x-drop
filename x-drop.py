@@ -25,14 +25,24 @@ explored = initialize(A,B, 2)
 def viz(mat, A, B):
     fig, ax = plt.subplots()
     ax.matshow(mat, cmap='RdYlGn')
+    
+    # Display the matrix values
     for i in range(mat.shape[0]):
         for j in range(mat.shape[1]):
             c = mat[i][j]
             ax.text(j, i, str(c), va='center', ha='center')
 
-    ax.set_xticklabels([''] + list(B))
-    ax.set_yticklabels([''] + list(A))
+    # Set tick labels to start at index 1
+    ax.set_xticks(range(len(B) + 1))
+    ax.set_yticks(range(len(A) + 1))
+    
+    ax.set_xticklabels([''] + list(B), fontsize=10)
+    ax.set_yticklabels([''] + list(A), fontsize=10)
+    
+    plt.xlabel('B Sequence')
+    plt.ylabel('A Sequence')
     plt.show()
+
 
 #print matrix function
 def print_matrix(mat):
@@ -66,10 +76,11 @@ def get_i_start(mat,d, i_start, i_end):
 def get_i_end(mat,d, i_start, i_end):
     i = i_end-1 # right now up to and not including!
     j = d - i
-    while i > i_start and mat[i][j] >50 :
+    while i > i_start and mat[i][j] > 50 :
         explored[i][j] = 1
         i -= 1
         j = d - i
+    # need to account for shrunk too much
     if mat[i_end - 1][d - (i_end - 1)] <= 50: # if no -inf yet then set to seen to 
         d_hi = float('inf')
     else:
@@ -87,7 +98,7 @@ def markX(mat,d, i_start, i_end, X_drop, x_drop_started):
         explored[i][j] = 1
         # if s>X_drop:
         #     mat[i][j] = 99
-        if (i == 4 and j == 1) or (i == 1 and j == 4):
+        if (i == 4 and j == 0) or (i == 0 and j == 4):
             mat[i][j] = 99
         # if (i == 2 and j == 5) or (i == 5 and j == 2):
         #     mat[i][j] = 99
@@ -111,13 +122,13 @@ def nw4(A,B, x_thresh=3):
     mat = initialize(A,B, 0.1)
     m = len(A) + 1 # rows
     n = len(B) + 1 # cols
-    i_start = 1
-    i_end = 1
+    i_start = 0
+    i_end = 0
     # TODO: figure out how to incorporate the base case into the compute and maybe start from 0?
     lower_diag = float('-inf')
     upper_diag = float('inf')
     # this has to be the long side
-    for ad in range(2, m + 1):
+    for ad in range(0, m): # m is len(A) + 1
         i_end = i_end + 1 # up to but not including
         for i in range(i_start, i_end):
             j=ad-i
@@ -133,15 +144,14 @@ def nw4(A,B, x_thresh=3):
         i_end = modify_i_end(i_end, upper_diag, ad)
         print(i_start, i_end)
     # viz(mat, A, B)
-    # return mat
     print("----")
     print(ad)
     print("----")
-    for ad in range(m, m + n - 2):
-        #i_end = i_end + 1 # up to but not including
-        #i_start = i_start
+    for ad in range(m, m + n - 1):
         expected_i_start = ad - m + 1
         i_start = max(i_start, expected_i_start)
+        expected_i_end = m
+        i_end = min(i_end + 1, expected_i_end)
         for i in range(i_start, i_end):
             j=ad-i
             # s = score(mat, A, B, i, j)
