@@ -134,6 +134,8 @@ def nw4(A,B, x_thresh=2):
             mat[i][j] = s
             explored[i][j] = 1
             max_score = max(mat[i][j], max_score)
+        if i_start >= i_end:
+            break
         markX(mat, ad, i_start, i_end, x_thresh, max_score)
         i_start, d_lo = get_i_start(mat, ad, i_start, i_end)
         i_end, d_hi = get_i_end(mat, ad, i_start, i_end)
@@ -142,6 +144,9 @@ def nw4(A,B, x_thresh=2):
         i_start = modify_i_start(i_start, lower_diag, ad)
         i_end = modify_i_end(i_end, upper_diag, ad)
         print(i_start, i_end)
+        viz(mat, A, B)
+    if i_start >= i_end:
+        return mat
     print("----")
     print(ad)
     print("----")
@@ -156,7 +161,7 @@ def nw4(A,B, x_thresh=2):
             mat[i][j] = s
             explored[i][j] = 1
             max_score = max(mat[i][j], max_score)
-        if i_start >= i_end: # last antidiagonal
+        if i_start == i_end:
             break
         markX(mat, ad, i_start, i_end, x_thresh, max_score)
         i_start, d_lo = get_i_start(mat, ad, i_start, i_end)
@@ -165,7 +170,7 @@ def nw4(A,B, x_thresh=2):
         upper_diag = min(upper_diag, d_hi)
         i_start = modify_i_start(i_start, lower_diag, ad)
         i_end = modify_i_end(i_end, upper_diag, ad)
-    viz(mat, A, B)
+        viz(mat, A, B)
 
 
 
@@ -175,5 +180,5 @@ def nw4(A,B, x_thresh=2):
 #A = "ACGGGGAACGGGGAGG"
 #B = "ATTCGGAACGGGGAGG"
 #B = "ATTCGGAATTCGGA"
-mat = nw4(A, B,3)
+mat = nw4(A, B)
 print_matrix(mat)
