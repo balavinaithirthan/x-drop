@@ -139,16 +139,16 @@ def nw4(rowSeq, colSeq, rows, cols, mat, x_thresh):
         i_start, d_lo = get_i_start(mat, ad, i_start, i_end)
         i_end, d_hi = get_i_end(mat, ad, i_start, i_end)
         lower_diag = max(lower_diag, d_lo)
+        # we need d_lo and d_hi if we want to shrink the bounds again,
+        # ie to never hit above/below a certain diagonal once its been crossed out, for that we need to grab d
         upper_diag = min(upper_diag, d_hi)
         i_start = modify_i_start(i_start, lower_diag, ad)
         i_end = modify_i_end(i_end, upper_diag, ad)
-        print(i_start, i_end)
-    viz(mat, rowSeq, colSeq)
     return mat
 
 
-rowSeq = "ACGGGGGGG"
-colSeq = "ACGGGG"
+rowSeq = "GGGGGGG"
+colSeq = "GGGG"
 rows = len(rowSeq)
 cols = len(colSeq)
 mat = np.zeros((rows + 1, cols + 1))
@@ -161,7 +161,7 @@ for j in range(1, cols + 1):
     mat[0][j] = -j
 
 
+mat = nw4(rowSeq, colSeq, rows, cols, mat, 2)
 viz(mat, rowSeq, colSeq)
 
-mat = nw4(rowSeq, colSeq, rows, cols, mat, 1)
 # print_matrix(mat)

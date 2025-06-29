@@ -1,0 +1,22 @@
+
+
+
+for e (1, max_e + 1):
+    for k in (-e, e + 1):
+        idx = offset + k
+        recurrence
+        extend(P[W[e][idx] - k] == T[W[e][idx]])
+        if (W[e][diag_end] == n):
+            done
+
+
+Middle structure has the following properties
+
+for e [1, max(m,n)]
+    for k [-e + offset, e + 1 + offset]
+        W[e][k]...
+        extend(P[W[e][k]] == T[W[e][k] - k])
+        check_end()
+
+
+i,j -> ad, i

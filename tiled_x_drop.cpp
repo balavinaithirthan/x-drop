@@ -316,7 +316,7 @@ std::pair<std::vector<int>, std::vector<int>> xdrop_nw(const std::string &A,
       final_ad = ad;
     }
   }
-  // outfile <<("final antidiagonal explored is %d\n", final_ad);
+  printf("final antidiagonal explored is %d\n", final_ad);
   auto end_time = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end_time - start_time;
   // outfile << "Elapsed time size " << num_cols - 1 << ", " << elapsed.count()
