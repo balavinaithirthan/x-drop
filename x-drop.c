@@ -3,22 +3,22 @@
 #include <string>
 #include <limits>
 #include <algorithm>
-#include <iomanip>  // for std::setw
+#include <iomanip> // for std::setw
 #include <random>
 
 // We'll use a global 'ping' like the Python code.
 static const int ping = 1;
 
 /**
- * Initialize an N x N matrix (where N = len(A) + ping) with 'fill_val' in its 
+ * Initialize an N x N matrix (where N = len(A) + ping) with 'fill_val' in its
  * interior, but sets the base-case boundaries: mat[i][0] = -i, mat[0][j] = -j.
- * 
+ *
  * NOTE: In the original Python code, for demonstration, the matrix is sized
- * by A’s length alone, ignoring B’s length. This works for the example if A 
+ * by A’s length alone, ignoring B’s length. This works for the example if A
  * and B are the same length. Adjust for the general case if needed.
  */
-std::vector<std::vector<double>> initializeMatrix(const std::string &A, 
-                                                  const std::string &B, 
+std::vector<std::vector<double>> initializeMatrix(const std::string &A,
+                                                  const std::string &B,
                                                   double fill_val)
 {
     int N = static_cast<int>(A.size());
@@ -27,19 +27,23 @@ std::vector<std::vector<double>> initializeMatrix(const std::string &A,
 
     // Fill interior (excluding the top row & left col) with fill_val
     // the Python code does matp = mat[1:,1:], matp.fill(fill_val)
-    for(int i = 1; i < N + ping; i++) {
-        for(int j = 1; j < N + ping; j++) {
+    for (int i = 1; i < N + ping; i++)
+    {
+        for (int j = 1; j < N + ping; j++)
+        {
             mat[i][j] = fill_val;
         }
     }
 
     // Base case
-    for(int i = 1; i < static_cast<int>(A.size()) + ping; i++) {
+    for (int i = 1; i < static_cast<int>(A.size()) + ping; i++)
+    {
         mat[i][0] = -static_cast<double>(i);
     }
-    for(int j = 1; j < static_cast<int>(B.size()) + ping; j++) {
+    for (int j = 1; j < static_cast<int>(B.size()) + ping; j++)
+    {
         // Careful not to exceed the matrix boundary if A.size() != B.size().
-        if(j < N + ping)
+        if (j < N + ping)
             mat[0][j] = -static_cast<double>(j);
     }
     return mat;
@@ -50,8 +54,10 @@ std::vector<std::vector<double>> initializeMatrix(const std::string &A,
  */
 void printMatrix(const std::vector<std::vector<double>> &mat)
 {
-    for(size_t i = 0; i < mat.size(); i++) {
-        for(size_t j = 0; j < mat[i].size(); j++) {
+    for (size_t i = 0; i < mat.size(); i++)
+    {
+        for (size_t j = 0; j < mat[i].size(); j++)
+        {
             std::cout << std::setw(6) << mat[i][j] << " ";
         }
         std::cout << std::endl;
@@ -59,7 +65,7 @@ void printMatrix(const std::vector<std::vector<double>> &mat)
 }
 
 /**
- * Score function: 
+ * Score function:
  *   diag = mat[i-1][j-1] + (1 if A[i-1] == B[j-1], else 0)
  *   left = mat[i][j-1] - 2
  *   up   = mat[i-1][j] - 2
@@ -68,14 +74,14 @@ void printMatrix(const std::vector<std::vector<double>> &mat)
  * We assume i and j are within valid index range in the matrix.
  */
 double score(const std::vector<std::vector<double>> &mat,
-             const std::string &A, 
+             const std::string &A,
              const std::string &B,
-             int i, 
+             int i,
              int j)
 {
-    double diag = mat[i-1][j-1] + (A[i-1] == B[j-1] ? 1.0 : 0.0);
-    double left = mat[i][j-1] - 2.0;
-    double up   = mat[i-1][j] - 2.0;
+    double diag = mat[i - 1][j - 1] + (A[i - 1] == B[j - 1] ? 1.0 : 0.0);
+    double left = mat[i][j - 1] - 2.0;
+    double up = mat[i - 1][j] - 2.0;
     return std::max({diag, left, up});
 }
 
@@ -87,17 +93,19 @@ double score(const std::vector<std::vector<double>> &mat,
 std::pair<int, double> get_i_start(
     std::vector<std::vector<double>> &mat,
     std::vector<std::vector<double>> &explored,
-    int d, 
-    int i_start, 
+    int d,
+    int i_start,
     int i_end)
 {
     int i = i_start;
     double d_lo = -std::numeric_limits<double>::infinity();
-    while(i < i_end) {
+    while (i < i_end)
+    {
         int j = d - i;
-        if(j < 0 || j >= static_cast<int>(mat[i].size())) 
+        if (j < 0 || j >= static_cast<int>(mat[i].size()))
             break;
-        if(mat[i][j] != -std::numeric_limits<double>::infinity()) {
+        if (mat[i][j] != -std::numeric_limits<double>::infinity())
+        {
             // We found a valid cell
             break;
         }
@@ -107,17 +115,22 @@ std::pair<int, double> get_i_start(
     }
     // If the original i_start cell is not -∞, set d_lo to -∞
     // else set something else. (Mirroring the Python code logic.)
-    if(i_start < i_end) {
+    if (i_start < i_end)
+    {
         int j_start = d - i_start;
-        if(0 <= j_start && j_start < (int)mat[i_start].size()) {
-            if(mat[i_start][j_start] != -std::numeric_limits<double>::infinity()) {
+        if (0 <= j_start && j_start < (int)mat[i_start].size())
+        {
+            if (mat[i_start][j_start] != -std::numeric_limits<double>::infinity())
+            {
                 d_lo = -std::numeric_limits<double>::infinity();
-            } else {
+            }
+            else
+            {
                 // The Python code does: d_lo = i - j + ...
                 // "i - j" is "i - (d - i)" = i - d + i = 2*i - d
                 // They used +2 in some place. We'll replicate carefully:
                 int j_temp = d - i;
-                d_lo = (double)(2*i - d);
+                d_lo = (double)(2 * i - d);
             }
         }
     }
@@ -125,23 +138,25 @@ std::pair<int, double> get_i_start(
 }
 
 /**
- * get_i_end() from Python code. We move downward from i_end-1 
+ * get_i_end() from Python code. We move downward from i_end-1
  * while mat[i][j] == -∞, then return new i_end and d_hi.
  */
 std::pair<int, double> get_i_end(
     std::vector<std::vector<double>> &mat,
     std::vector<std::vector<double>> &explored,
-    int d, 
-    int i_start, 
+    int d,
+    int i_start,
     int i_end)
 {
     int i = i_end - 1; // we walk downward from i_end-1
     double d_hi = std::numeric_limits<double>::infinity();
-    while(i >= i_start) {
+    while (i >= i_start)
+    {
         int j = d - i;
-        if(j < 0 || j >= static_cast<int>(mat[i].size())) 
+        if (j < 0 || j >= static_cast<int>(mat[i].size()))
             break;
-        if(mat[i][j] != -std::numeric_limits<double>::infinity()) {
+        if (mat[i][j] != -std::numeric_limits<double>::infinity())
+        {
             // Found a valid cell
             break;
         }
@@ -151,13 +166,17 @@ std::pair<int, double> get_i_end(
     // If mat[i_end-1][?] != -∞, set d_hi = ∞ else something else
     int i_chk = i_end - 1;
     int j_chk = d - i_chk;
-    if(i_chk >= 0 && i_chk < (int)mat.size() && j_chk >= 0 && j_chk < (int)mat[i_chk].size()) {
-        if(mat[i_chk][j_chk] != -std::numeric_limits<double>::infinity()) {
+    if (i_chk >= 0 && i_chk < (int)mat.size() && j_chk >= 0 && j_chk < (int)mat[i_chk].size())
+    {
+        if (mat[i_chk][j_chk] != -std::numeric_limits<double>::infinity())
+        {
             d_hi = std::numeric_limits<double>::infinity();
-        } else {
+        }
+        else
+        {
             // The python code: d_hi = i - j + 2 => i - (d - i) + 2 = 2*i - d + 2
             int j_temp = d - i;
-            d_hi = (double)(2*i - d + 2);
+            d_hi = (double)(2 * i - d + 2);
         }
     }
     return std::make_pair(i + 1, d_hi);
@@ -173,13 +192,15 @@ void markX(std::vector<std::vector<double>> &mat,
            double max_score)
 {
     // replicate the "for i in range(i_start, i_end):" logic
-    for(int i = i_start; i < i_end; i++) {
+    for (int i = i_start; i < i_end; i++)
+    {
         int j = d - i;
-        if(j < 0 || j >= (int)mat[i].size()) 
+        if (j < 0 || j >= (int)mat[i].size())
             continue;
         double s = mat[i][j];
         explored[i][j] = 1.0;
-        if(s < (max_score - X_drop)) {
+        if (s < (max_score - X_drop))
+        {
             mat[i][j] = -std::numeric_limits<double>::infinity();
         }
     }
@@ -192,7 +213,8 @@ void markX(std::vector<std::vector<double>> &mat,
  */
 int modify_i_start(int i_start, double d_lo, int ad)
 {
-    if(d_lo == -std::numeric_limits<double>::infinity()) {
+    if (d_lo == -std::numeric_limits<double>::infinity())
+    {
         // same as python: if no real offset, just keep i_start
         return i_start;
     }
@@ -209,15 +231,13 @@ int modify_i_start(int i_start, double d_lo, int ad)
  */
 int modify_i_end(int i_end, double d_hi, int ad)
 {
-    if(d_hi == std::numeric_limits<double>::infinity()) {
+    if (d_hi == std::numeric_limits<double>::infinity())
+    {
         return i_end;
     }
     int i_on_diag = (int)((d_hi + (double)ad) / 2.0);
     return std::min(i_end, i_on_diag);
 }
-
-
-
 
 /**
  * The main x-drop NW function, replicating the Python's nw4(A, B, x_thresh=2).
@@ -230,7 +250,7 @@ std::pair<std::vector<std::vector<double>>, std::vector<std::vector<double>>> xd
                                                                                        const std::string &B,
                                                                                        double x_thresh)
 {
-    
+
     // Matrix dimension (following the python snippet):
     std::vector<std::vector<double>> mat = initializeMatrix(A, B, 0.1);
 
@@ -241,25 +261,29 @@ std::pair<std::vector<std::vector<double>>, std::vector<std::vector<double>>> xd
     int n = static_cast<int>(B.size()) + 1; // cols
 
     int i_start = 1;
-    int i_end   = 1;
+    int i_end = 1;
     double max_score = -std::numeric_limits<double>::infinity();
 
     double lower_diag = -std::numeric_limits<double>::infinity();
     double upper_diag = std::numeric_limits<double>::infinity();
     int final_ad = 0;
     // First pass: ad in [2, m)
-    for(int ad = 2; ad < m; ad++) {
+    for (int ad = 2; ad < m; ad++)
+    {
         i_end++;
-        for(int i = i_start; i < i_end; i++) {
+        for (int i = i_start; i < i_end; i++)
+        {
             int j = ad - i;
-            if(j < 0 || j >= (int)mat[i].size()) {
+            if (j < 0 || j >= (int)mat[i].size())
+            {
                 continue;
             }
             // compute the score
             double s = score(mat, A, B, i, j);
             mat[i][j] = s;
             explored[i][j] = 1.0;
-            if(s > max_score) {
+            if (s > max_score)
+            {
                 max_score = s;
             }
         }
@@ -279,37 +303,46 @@ std::pair<std::vector<std::vector<double>>, std::vector<std::vector<double>>> xd
         upper_diag = std::min(upper_diag, d_hi);
 
         i_start = modify_i_start(i_start, lower_diag, ad);
-        i_end   = modify_i_end(i_end,   upper_diag, ad);
+        i_end = modify_i_end(i_end, upper_diag, ad);
     }
 
     // Second pass: ad in [m, m + n - 1)
     // This covers anti-diagonals that extend beyond the first dimension's corner.
-    for(int ad = m; ad < m + n - 1; ad++) {
+    for (int ad = m; ad < m + n - 1; ad++)
+    {
         int expected_i_start = ad - m + 1;
-        if(expected_i_start > i_start) {
+        if (expected_i_start > i_start)
+        {
             i_start = expected_i_start;
         }
-        int expected_i_end = m; 
-        if((i_end + 1) < expected_i_end) {
+        int expected_i_end = m;
+        if ((i_end + 1) < expected_i_end)
+        {
             i_end = i_end + 1;
-        } else {
+        }
+        else
+        {
             i_end = expected_i_end;
         }
 
-        for(int i = i_start; i < i_end; i++) {
+        for (int i = i_start; i < i_end; i++)
+        {
             int j = ad - i;
-            if(j < 0 || j >= (int)mat[i].size() || i < 0 || i >= (int)mat.size()) {
+            if (j < 0 || j >= (int)mat[i].size() || i < 0 || i >= (int)mat.size())
+            {
                 continue;
             }
             double s = score(mat, A, B, i, j);
             mat[i][j] = s;
             explored[i][j] = 1.0;
-            if(s > max_score) {
+            if (s > max_score)
+            {
                 max_score = s;
             }
         }
 
-        if(i_start == i_end) {
+        if (i_start == i_end)
+        {
             // no more space to move -> break
             break;
         }
@@ -330,7 +363,7 @@ std::pair<std::vector<std::vector<double>>, std::vector<std::vector<double>>> xd
         upper_diag = std::min(upper_diag, d_hi);
 
         i_start = modify_i_start(i_start, lower_diag, ad);
-        i_end   = modify_i_end(i_end,   upper_diag, ad);
+        i_end = modify_i_end(i_end, upper_diag, ad);
         final_ad = ad;
     }
     printf("final antidiagonal explored is %d\n", final_ad);
@@ -344,14 +377,15 @@ std::string string_gen(const int length)
 
     // Set up random number generation
     std::random_device rd;
-    std::mt19937 gen(rd());  // Mersenne Twister
+    std::mt19937 gen(rd()); // Mersenne Twister
     std::uniform_int_distribution<> dist(0, 3);
 
     // Build a random string
     std::string randomDNA;
-    randomDNA.reserve(length);  // reserve for efficiency
+    randomDNA.reserve(length); // reserve for efficiency
 
-    for (int i = 0; i < length; ++i) {
+    for (int i = 0; i < length; ++i)
+    {
         randomDNA.push_back(alphabet[dist(gen)]);
     }
     return randomDNA;
@@ -372,13 +406,16 @@ int main()
 
     // Print out the final matrix
     std::cout << "Final x-drop NW matrix:\n";
-    std::cout<<mat[A.size()][B.size()]<<std::endl;
+    std::cout << mat[A.size()][B.size()] << std::endl;
 
     // Count the number of explored cells where the value is 1.0
     int explored_count = 0;
-    for (const auto& row : explored) {
-        for (const auto& cell : row) {
-            if (cell == 1.0) {
+    for (const auto &row : explored)
+    {
+        for (const auto &cell : row)
+        {
+            if (cell == 1.0)
+            {
                 explored_count++;
             }
         }

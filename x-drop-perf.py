@@ -92,7 +92,6 @@ def needleman_wunsch_banded_loops(
             char1 = seq1[i - 1]
             char2 = seq2[j - 1]
             score = match if char1 == char2 else mismatch
-
             best = INF
             if i > 0 and dp[i - 1][j] != INF:
                 best = max(best, dp[i - 1][j] + gap)

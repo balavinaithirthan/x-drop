@@ -1,22 +1,38 @@
 
+1. figure out the size of the W matrix
+W[e][k]
+what is the domain of e and the domain of k
+offset/k can be negative so do 2 * largest k
 
 
-for e (1, max_e + 1):
-    for k in (-e, e + 1):
-        idx = offset + k
-        recurrence
-        extend(P[W[e][idx] - k] == T[W[e][idx]])
-        if (W[e][diag_end] == n):
-            done
 
 
-Middle structure has the following properties
 
-for e [1, max(m,n)]
-    for k [-e + offset, e + 1 + offset]
-        W[e][k]...
-        extend(P[W[e][k]] == T[W[e][k] - k])
-        check_end()
+2. Base case
+- set initial to 0
+- extend step
+- check for end
+
+Every recurrence -> set, extend, check for end
 
 
-i,j -> ad, i
+
+
+for 1, max_e
+    (-e, e): how do we know diagonal should be between the two
+        compute W[e][k]
+        how do we know W[e][k] recurrence
+        extend
+        check for end
+
+
+
+1. Convert compute step into 
+. compute recurrence
+extend
+check for end (user provides end condition?)
+
+Step 1:
+convert S[i][j] to W[e][k] with extend
+
+

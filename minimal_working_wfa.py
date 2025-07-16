@@ -7,21 +7,31 @@ def compute_W(P, T):
     offset = m  # offset off main diagonal, ie diagonal 0 should be at idx offset in the wavefront
     diag_end = offset + (n - m)  # location of the diagonal the hits the (m,n) point
     W = [[-1] * num_diags for _ in range(max_e + 1)]  # score by number of diagonals
+    diag_hi = [0] * (max_e + 1)  # right-most diagonal reached at score e
+    diag_lo = [0] * (max_e + 1)  # left-most  diagonal reached at score e
     v = h = 0
     W[0][offset] = 0
+    end_pt = n
     while v < m and h < n and P[v] == T[h]:
         v += 1
         h += 1
         W[0][offset] += 1
+    diag_hi[0] = diag_lo[0] = 0
 
     # check for perfect prefix match covering full alignment
-    if W[0][diag_end] == n:
+    if W[0][diag_end] == end_pt:
         return W, 0
     # wavefront expansion
     for e in range(1, max_e + 1):
-        k_min, k_max = -e, e
+        # k_min, k_max = -e, e
         # compute best predecessor
-        for k in range(k_min, k_max + 1):
+        # for k in range(k_min, k_max + 1):
+        lo = diag_lo[e - 1] - 1
+        hi = diag_hi[e - 1] + 1
+        diag_lo[e] = lo
+        diag_hi[e] = hi
+
+        for k in range(lo, hi + 1):  # inclusive!
             idx = offset + k
             W[e][idx] = max(
                 W[e - 1][idx + 1],  # deletion
@@ -40,8 +50,9 @@ def compute_W(P, T):
                 W[e][idx] += 1
 
             # check if reached end of T at diagonal corresponding to (n-m)
-            if W[e][diag_end] == n:
+            if W[e][diag_end] == end_pt:
                 return W, e
+
     # fallback: maximum edits
     return W, e
 
@@ -139,3 +150,5 @@ if __name__ == "__main__":
     print(f"True Edit Distance: {true_e}")
     W, e = compute_W(P, T)
     print("Trying Edit distance:", e)
+    run_all_validations()
+    print("All tests completed.")
