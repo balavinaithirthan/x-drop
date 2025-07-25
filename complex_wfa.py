@@ -7,9 +7,6 @@ def print_matrix(M: List[List[int]]) -> None:
 
 
 def wfa_align(q: str, t: str, penalties: Dict[str, int]) -> int:
-    if q == t:
-        djiwq = 0
-
     x, o, e = penalties["x"], penalties["o"], penalties["e"]
 
     m, n = len(q), len(t)
@@ -17,16 +14,17 @@ def wfa_align(q: str, t: str, penalties: Dict[str, int]) -> int:
         max(m, n) * x, max(m, n) * (o + e)
     )  # why is this the max_score
     num_diags = 2 * max_score + 1  # worst case
-    diag_lo = -(num_diags // 2)
-    diag_hi = num_diags // 2
     offset = m
 
     INF = 10**9
-    M = [[-INF] * (1000) for _ in range(max_score + 1)]
-    I = [[-INF] * (1000) for _ in range(max_score + 1)]
-    D = [[-INF] * (1000) for _ in range(max_score + 1)]
-    A_k = offset + (m - n)  # where the diagonal 0 is, why is this m - n and not n - m
-    A_offset = m  # further i, ie further row
+    M = [[-INF] * (num_diags) for _ in range(max_score + 1)]
+    I = [[-INF] * (num_diags) for _ in range(max_score + 1)]
+    D = [[-INF] * (num_diags) for _ in range(max_score + 1)]
+
+    M_lo = I_lo = D_lo = [0] * (max_score + 1)
+    M_hi = I_hi = D_hi = [0] * (max_score + 1)
+    A_k = offset + (m - n)
+    A_offset = m
 
     ######
     M[0][offset] = 0
@@ -38,10 +36,29 @@ def wfa_align(q: str, t: str, penalties: Dict[str, int]) -> int:
     if M[0][A_k] == A_offset:
         return 0
 
-    #######
-    # question: why is score always positive?
     for score in range(1, max_score + 1):
-        for k in range(diag_lo, diag_hi):
+        # hi ← max{𝑀̃ˢ⁻ˣʰⁱ, 𝑀̃ˢ⁻ᵒ⁻ᵉʰⁱ, Ĩˢ⁻ᵉʰⁱ, 𝒟̃ˢ⁻ᵉʰⁱ} + 1
+        # lo ← min{𝑀̃ˢ⁻ˣˡᵒ, 𝑀̃ˢ⁻ᵒ⁻ᵉˡᵒ, Ĩˢ⁻ᵉˡᵒ, 𝒟̃ˢ⁻ᵉˡᵒ} − 1
+        hi = (
+            max(
+                M_hi[score - x],
+                M_hi[score - o - e],
+                I_hi[score - e],
+                D_hi[score - e],
+            )
+            + 1
+        )
+        lo = (
+            min(
+                M_lo[score - x],
+                M_lo[score - o - e],
+                I_lo[score - e],
+                D_lo[score - e],
+            )
+            - 1
+        )
+        # lo =
+        for k in range(lo, hi):
             idx = offset + k
             ins = max(M[score - o - e][idx - 1] + 1, I[score - e][idx - 1] + 1)
             delt = max(M[score - o - e][idx + 1], D[score - e][idx + 1])
@@ -49,19 +66,27 @@ def wfa_align(q: str, t: str, penalties: Dict[str, int]) -> int:
 
             I[score][idx] = ins
             D[score][idx] = delt
-            M[score][idx] = max(sub, ins, delt)
+            M[score][idx] = max(sub, ins, delt, 0)
 
             val = M[score][idx]
             v = val - k
             h = val
-            while v >= 0 and h >= 0 and v < m and h < n and q[v] == t[h]:
+            while v < m and h < n and q[v] == t[h]:
                 v += 1
                 h += 1
                 M[score][idx] += 1
 
             if M[score][A_k] == A_offset:
                 return score
-    return 1000  # fallback: maximum edits
+        M_hi[score] = I_hi[score] = D_hi[score] = (
+            max(M_hi[score - x], M_hi[score - o - e], I_hi[score - e], D_hi[score - e])
+            + 1
+        )
+        M_lo[score] = I_lo[score] = D_lo[score] = (
+            max(M_lo[score - x], M_lo[score - o - e], I_lo[score - e], D_lo[score - e])
+            - 1
+        )
+    return 1000
 
 
 # ---------------------------------------------------------------------
@@ -131,6 +156,7 @@ def test_alignments():
         print(f"Normal Align Score: {normal_score}")
         print(f"WFA Align Score: {wfa_score}")
         print("Match" if normal_score == wfa_score else "Mismatch")
+        assert normal_score == wfa_score, f"Scores do not match for {q} vs {t}"
         print("-" * 40)
 
 
