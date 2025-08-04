@@ -9,7 +9,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <iomanip>
+#include <chrono>
 
 template <typename ScoreT = int>
 class SubstitutionMatrix
@@ -38,7 +38,10 @@ public:
         auto it1 = index_.find(a);
         auto it2 = index_.find(b);
         if (it1 == index_.end() || it2 == index_.end())
+        {
+            std::cerr << "Unknown symbol: " << a << " or " << b << std::endl;
             throw std::out_of_range("unknown symbol");
+        }
         return data_[it1->second * N_ + it2->second];
     }
 };
@@ -121,6 +124,11 @@ public:
         std::cout << ")" << std::endl;
     }
 
+    std::vector<size_t> shape() const
+    {
+        return shape_;
+    }
+
 private:
     std::vector<size_t> shape_;
     std::vector<size_t> strides_;
@@ -154,7 +162,8 @@ T variadic_min(T first, Args... args)
 {
     return (std::min)({first, args...});
 }
-int main()
+
+Matrix<int> original_align_sequences(const std::vector<char> &query_seq, const std::vector<char> &ref_seq)
 {
     std::string alpha = "ATCG";
     std::vector<int> flat = {
@@ -164,56 +173,133 @@ int main()
         -1, -1, -1, 2};
     SubstitutionMatrix<int> sigma(alpha, flat);
 
-    std::vector<size_t> shape = {109, 60}; // i in [0,100], j in [0,200]
-    Matrix<int> S(shape, 0);
-    Matrix<char> query({50}, std::vector<char>(50, 'A'));
-    Matrix<char> reference({60}, std::vector<char>(60, 'A'));
+    size_t K = query_seq.size() + ref_seq.size(); // max combined length
+    size_t M = ref_seq.size();
 
-    // recurrence expr S(0, 0) = 0
-    // recurrence expr S((k - m), 0) = (-2 * (k - m))
-    // S(m, m) = (-2 * m)
-    // recurrence expr S(k, m) = max(S((k - 2), (m - 1)), (S((k - 1), m) + -2), (S((k - 1), (m - 1)) + -2))
-    for (int k = 0; k <= 108; ++k)
+    Matrix<int> S({K + 1, M + 1}, 0); // DP matrix
+
+    // Start timing
+    auto start = std::chrono::high_resolution_clock::now();
+
+    for (size_t k = 0; k <= K; ++k)
     {
-        // max(0, k - 3), min(k, 4)
-        for (int m = std::max(0, k - 49); m <= std::min(59, k); ++m)
+        for (size_t m = std::max<int>(0, k - query_seq.size()); m <= std::min(k, M); ++m)
         {
-            if (((k == 0) && (m == 0)))
+            if (k == 0 && m == 0)
             {
                 S(0, 0) = 0;
-                continue;
             }
-            if (((k == (k - m)) && (m == 0)))
+            else if (m == 0 && k - m == k)
             {
-                S((k - m), 0) = (-2 * (k - m));
-                continue;
+                S(k, 0) = -2 * k;
             }
-            if ((k == m))
+            else if (k == m)
             {
-                S(m, m) = (-2 * m);
-                continue;
+                S(m, m) = -2 * m;
             }
-            S(k, m) = variadic_max((S((k - 2), (m - 1)) + sigma(query((k - m)), reference(m))), (S((k - 1), m) + -2), (S((k - 1), (m - 1)) + -2));
-            continue;
+            else
+            {
+                S(k, m) = variadic_max(S(k - 2, m - 1) + sigma(query_seq[k - m - 1], ref_seq[m - 1]),
+                                       S(k - 1, m) - 2,
+                                       S(k - 1, m - 1) - 2);
+            }
         }
     }
 
-    // print out matrix with aligned columns
-    size_t max_width = 0;
-    for (size_t i = 0; i < shape[0]; ++i)
-    {
-        for (size_t j = 0; j < shape[1]; ++j)
-        {
-            max_width = std::max(max_width, std::to_string(S(i, j)).length());
-        }
-    }
+    // End timing and print result
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    std::cout << "Original algorithm execution time: " << duration.count() << " microseconds" << std::endl;
 
-    for (size_t i = 0; i < shape[0]; ++i)
-    {
-        for (size_t j = 0; j < shape[1]; ++j)
-        {
-            std::cout << std::setw(max_width) << S(i, j) << " ";
-        }
-        std::cout << std::endl;
-    }
+    return S;
 }
+
+Matrix<int> faster_align_sequences(const std::vector<char> &query_seq, const std::vector<char> &ref_seq)
+{
+    std::string alpha = "ATCG";
+    std::vector<int> flat = {
+        2, -1, -1, -1,
+        -1, 2, -1, -1,
+        -1, -1, 2, -1,
+        -1, -1, -1, 2};
+    SubstitutionMatrix<int> sigma(alpha, flat);
+
+    size_t K = query_seq.size() + ref_seq.size(); // max combined length
+    size_t M = ref_seq.size();
+
+    Matrix<int> S({K + 1, M + 1}, 0); // DP matrix
+
+    // Start timing
+    auto start = std::chrono::high_resolution_clock::now();
+
+    S(0, 0) = 0; // Base case
+    for (size_t k = 1; k <= K; ++k)
+    {
+        S(k, 0) = -2 * k; // First column
+    }
+    for (size_t m = 1; m <= M; ++m)
+    {
+        S(m, m) = -2 * m; // First row
+    }
+
+    for (size_t k = 2; k <= K; ++k)
+    {
+        for (size_t m = std::max<int>(1, k - query_seq.size()); m <= std::min(k - 1, M); ++m)
+        {
+            S(k, m) = variadic_max(S(k - 2, m - 1) + sigma(query_seq[k - m - 1], ref_seq[m - 1]),
+                                   S(k - 1, m) - 2,
+                                   S(k - 1, m - 1) - 2);
+        }
+    }
+
+    // End timing and print result
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    std::cout << "Faster algorithm execution time: " << duration.count() << " microseconds" << std::endl;
+
+    return S;
+}
+
+// main
+int main()
+{
+    std::vector<char> query_seq(3000, 'C'); // 200 As
+    std::vector<char> ref_seq(1000, 'A');   // 300 As
+
+    Matrix<int> alignment = original_align_sequences(query_seq, ref_seq);
+    alignment.print_shape();
+    std::cout << "Original Alignment:" << std::endl;
+    // print S
+    // for (size_t i = 0; i < alignment.shape()[0]; ++i)
+    // {
+    //     for (size_t j = 0; j < alignment.shape()[1]; ++j)
+    //     {
+    //         std::cout << alignment(i, j) << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
+
+    Matrix<int> faster_alignment = faster_align_sequences(query_seq, ref_seq);
+    faster_alignment.print_shape();
+    std::cout << "Faster Alignment:" << std::endl;
+    // print S
+    // for (size_t i = 0; i < faster_alignment.shape()[0]; ++i)
+    // {
+    //     for (size_t j = 0; j < faster_alignment.shape()[1]; ++j)
+    //     {
+    //         std::cout << faster_alignment(i, j) << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
+
+    // percent improvement
+    return 0;
+}
+
+/*
+Conclusion
+
+- all mismatches 30% slower
+- all matches is the same
+
+*/
