@@ -67,7 +67,16 @@ int LCS_k_m(std::vector<int> &S, const std::string &A, const std::string &B)
             }
         }
     }
-
+    // print out matrix
+    std::cout << "LCS_k_m matrix normal->:\n";
+    for (int k = 0; k <= K; ++k)
+    {
+        for (int j = 0; j <= n; ++j)
+        {
+            std::cout << S[idx(k, j)] << " ";
+        }
+        std::cout << std::endl;
+    }
     return S[idx(K, n)];
 }
 
@@ -211,6 +220,16 @@ int LCS_k_m_vec(std::vector<int> &S,
         }
     }
 
+    // print out matrix
+    for (int k = 0; k <= K; ++k)
+    {
+        for (int j = 0; j <= n; ++j)
+        {
+            std::cout << S[idx(k, j)] << " ";
+        }
+        std::cout << std::endl;
+    }
+
     return S[idx(K, n)];
 }
 
@@ -231,7 +250,7 @@ int main()
     // vectorized LCS using (k,m) coordinates
     std::vector<int> S_km((K + 1) * (m + 1), 0);
     int result2 = LCS_k_m_vec(S_km, A, B);
-    std::cout << "Diagonal (k,m) LCS result: " << result2 << std::endl;
+    std::cout << "Vectorized Diagonal (k,m) LCS result: " << result2 << std::endl;
 
     // Diagonal LCS using (k, m) coordinates
     int result3 = LCS_k_m(S_km, A, B);
