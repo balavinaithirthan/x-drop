@@ -228,20 +228,19 @@ int main()
     int result1 = LCS(A, B, dp);
     std::cout << "Classic (i,j) LCS result: " << result1 << std::endl;
 
-    // Diagonal LCS using (k, m) coordinates
-    std::vector<int> S_km((K + 1) * (m + 1), 0);
-    int result2 = LCS_k_m(S_km, A, B);
-    std::cout << "Diagonal (k,m) LCS result: " << result2 << std::endl;
-
     // vectorized LCS using (k,m) coordinates
     std::vector<int> S_km((K + 1) * (m + 1), 0);
     int result2 = LCS_k_m_vec(S_km, A, B);
     std::cout << "Diagonal (k,m) LCS result: " << result2 << std::endl;
 
+    // Diagonal LCS using (k, m) coordinates
+    int result3 = LCS_k_m(S_km, A, B);
+    std::cout << "Diagonal (k,m) LCS result: " << result3 << std::endl;
+
     // Dilated LCS
     std::vector<int> S_dilated((n + 1) * (m + 1), 0);
-    int result3 = dilated_LCS(S_dilated, A, B);
-    std::cout << "Dilated LCS result: " << result3 << std::endl;
+    int result4 = dilated_LCS(S_dilated, A, B);
+    std::cout << "Dilated LCS result: " << result4 << std::endl;
 
     return 0;
 }
