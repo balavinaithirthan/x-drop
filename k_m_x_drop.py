@@ -12,8 +12,11 @@ def lev_T(a, b):
 
     # Fill in DP using your recurrence
     for k in range(1, K + 1):
-        for j in range(max((k - 1) // 2, max(1, k - m)), min(n, k) + 1):
+        for j in range(max(1, k - m), min((3 + k) // 2, min(n, k) + 1)):  # j - i < 3
+            # k = i + j, j = k - i
             i = k - j
+            # if j - i > 3: # == j - i < 3
+            #     continue
             if i == 0:
                 continue  # already set via base T[k][k]
             cost = 0 if a[i - 1] == b[j - 1] else 1
@@ -25,7 +28,7 @@ def lev_T(a, b):
                 T[k][j] = 1 + min(T[k - 1][j], T[k - 1][j - 1], T[k - 2][j - 1])
 
     # Result is S[m][n] = T[m + n][n]
-    return T[K][n]
+    return T, T[K][n]
 
 
 def print_matrix(T, a, b, title="DP Matrix T"):
@@ -64,53 +67,31 @@ def test_lev_T():
 
     # Test case 1: Simple example
     a1, b1 = "catttkfopefopwefpoet", "doggggfneifewwfpg"
-    result1 = lev_T(a1, b1)
+    T, result1 = lev_T(a1, b1)
     print(f"\nTest 1: a='{a1}', b='{b1}'")
     print(f"Edit distance: {result1}")
 
     # Re-run to get matrix for printing
-    m, n = len(a1), len(b1)
-    K = m + n
-    T = [[K + 1] * (n + 1) for _ in range(K + 1)]
-
-    # Base cases
-    for k in range(K + 1):
-        if k <= n:
-            T[k][k] = k
-        T[k][0] = k
-
-    # Fill DP
-    for k in range(1, K + 1):
-        for j in range(max((k - 5) // 2, max(1, k - m)), min(n, k) + 1):
-            # i = k - j
-            # if i == 0:
-            #     continue
-            # cost = 0 if a1[i - 1] == b1[j - 1] else 1
-            # if cost == 0:
-            #     T[k][j] = T[k - 2][j - 1]
-            # else:
-            #     T[k][j] = 1 + min(T[k - 1][j], T[k - 1][j - 1], T[k - 2][j - 1])
-            T[k][j] = 10
 
     print_matrix(T, a1, b1, "Test 1 Matrix")
 
     # take matrix T and fill in locations on i, j matrix
-    T2 = [[0] * (m + 2) for _ in range(n + 2)]
-    for k in range(1, K + 1):
-        for j in range(max(1, k - m), min(n, k) + 1):
-            i = k - j
-            if T[k][j] == 10:
-                print(f"({i},{j})", end=" ")
-                T2[i][j] = 10
+    # T2 = [[0] * (m + 2) for _ in range(n + 2)]
+    # for k in range(1, K + 1):
+    #     for j in range(max(1, k - m), min(n, k) + 1):
+    #         i = k - j
+    #         if T[k][j] == 10:
+    #             print(f"({i},{j})", end=" ")
+    #             T2[i][j] = 10
 
-    print("\nMatrix T2 (formatted):")
-    for i in range(m + 1):
-        for j in range(n + 1):
-            if T2[i][j] == 10:
-                print(f" 10 ", end="")
-            else:
-                print("  - ", end="")
-        print()
+    # print("\nMatrix T2 (formatted):")
+    # for i in range(m + 1):
+    #     for j in range(n + 1):
+    #         if T2[i][j] == 10:
+    #             print(f" 10 ", end="")
+    #         else:
+    #             print("  - ", end="")
+    #     print()
 
     # Test case 2: Empty strings
     # a2, b2 = "", "abc"

@@ -28,11 +28,17 @@ public:
     int longestCommonSubsequence(string text1, string text2)
     {
         int b = (text1[0] == text2[0]);
-        a[0][0] = b;
+        a[0][0] = b; // base case L[0][0] = text1[0] == text2[0]
         for (int i = 1; i < text1.length(); i++)
+        {
             a[i][0] = std::max(a[i - 1][0], int(text1[i] == text2[0]));
+            // L[i][0] = max(L[i-1][0], text1)
+        }
         for (int i = 1; i < text2.length(); i++)
+        {
             a[0][i] = std::max(a[0][i - 1], int(text1[0] == text2[i]));
+            //
+        }
         for (int i = 1; i < text1.length(); i++)
         {
             for (int j = 1; j < text2.length(); j++)
@@ -52,15 +58,17 @@ public:
     {
         return "compressed solution";
     }
-
+    // only use first and second row
     __attribute__((target("avx2"))) int longestCommonSubsequence(string text1, string text2)
     {
         int b = (text1[0] == text2[0]);
         a[0][0] = b;
+        // init base case for each column, row 0
         for (int i = 1; i < text2.length(); i++)
             a[0][i] = std::max(a[0][i - 1], int(text1[0] == text2[i]));
         for (int i = 1; i < text1.length(); i++)
         {
+            // move base case inside loop
             a[i & 1][0] = std::max(a[!(i & 1)][0], int(text1[i] == text2[0]));
             for (int j = 1; j < text2.length(); j++)
             {
@@ -276,6 +284,7 @@ public:
     int longestCommonSubsequence(string text1, string text2)
     {
         a[0][0] = int(text1[0] == text2[0]);
+        // init entire first row and all columns
         for (int i = 1; i < text2.length(); i++)
             a[0][i] = std::max(a[0][i - 1], int16_t(text1[0] == text2[i]));
 
@@ -295,7 +304,7 @@ public:
             int16_t c[8];
             for (int i = 1; i < text1.length(); i++)
             {
-
+                // get 8 values from previous row, c0 is dummy value?
                 c[0] = int(text1[i] == text2[0]);
                 c[1] = a[!(i & 1)][0] + int16_t(text1[i] == text2[1]);
                 c[2] = a[!(i & 1)][1] + int16_t(text1[i] == text2[2]);
@@ -304,8 +313,10 @@ public:
                 c[5] = a[!(i & 1)][4] + int16_t(text1[i] == text2[5]);
                 c[6] = a[!(i & 1)][5] + int16_t(text1[i] == text2[6]);
                 c[7] = a[!(i & 1)][6] + int16_t(text1[i] == text2[7]);
+                // load L(i - 1)(j - 1) + text1(i) == text2(i)
                 __m128i b = _mm_loadu_si128((const __m128i_u *)c);
 
+                // take max with L(i-1)(j)
                 __m128i b_shifted = _mm_shuffle_epi8(b, _mm_set_epi8(13, 12, 13, 12, 9, 8, 9, 8, 5, 4, 5, 4, 1, 0, 1, 0));
                 b = _mm_max_epi16(b, b_shifted);
                 // b[1] = std::max(b[1], b[0]);
