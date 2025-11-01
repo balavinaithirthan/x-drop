@@ -1,2 +1,0 @@
-clang++ -O3 -std=c++17 -o xdrop_nw new-x-drop.cpp
-
